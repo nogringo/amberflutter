@@ -125,3 +125,13 @@ amber.nip44Decrypt(
   print("plaintext: ${value['signature']}")
 });
 ```
+
+_Detect if Amber is installed in users's device_
+
+```
+final amber = Amberflutter();
+
+amber.isAppInstalled().then((value) {
+  print("Amber is installed: $value")
+});
+```

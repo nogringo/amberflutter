@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:amberflutter/amberflutter.dart';
 import 'package:nostr/nostr.dart';
@@ -160,6 +162,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 });
               },
               child: const Text('Nip 44 Decrypt'),
+            ),
+            FilledButton(
+              onPressed: () {
+                amber.isAppInstalled().then((value) {
+                  print('Amber is installed: $value');
+                });
+              },
+              child: const Text('Is Amber installed?'),
             ),
             Text(_text),
           ],

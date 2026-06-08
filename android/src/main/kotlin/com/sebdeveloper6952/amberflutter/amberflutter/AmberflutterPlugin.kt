@@ -41,6 +41,11 @@ class AmberflutterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, Plugi
     return context.packageManager.getInstalledApplications(0).find { info -> info.packageName == target } != null
   }
 
+  fun isExternalSignerInstalled(context: Context): Boolean {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("$nostrsignerUri:"))
+    return context.packageManager.queryIntentActivities(intent, 0).isNotEmpty()
+  }
+
   override fun onMethodCall(call: MethodCall, result: Result) {
     if (call.method == nostrsignerUri) {
       _result = MethodResultWrapper(result)
@@ -57,7 +62,9 @@ class AmberflutterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, Plugi
 
       val requestType = paramsMap[intentExtraKeyType] as? String ?: ""
       val currentUser = paramsMap[intentExtraKeyCurrentUser] as? String ?: ""
-      val pubKey = paramsMap[intentExtraKeyPubKey] as? String ?: ""
+      val pubKey = paramsMap[intentExtraKeyPubKey] as? String
+        ?: paramsMap["pubkey"] as? String
+        ?: ""
       val id = paramsMap[intentExtraKeyId] as? String ?: ""
       val uriData = paramsMap[intentExtraKeyUriData] as? String ?: ""
       val permissions = paramsMap[intentExtraKeyPermissions] as? String ?: ""
@@ -83,6 +90,7 @@ class AmberflutterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, Plugi
       intent.putExtra(intentExtraKeyType, requestType)
       intent.putExtra(intentExtraKeyCurrentUser, currentUser)
       intent.putExtra(intentExtraKeyPubKey, pubKey)
+      intent.putExtra("pubkey", pubKey)
       intent.putExtra(intentExtraKeyId, id)
       intent.putExtra(intentExtraKeyPermissions, permissions)
       // intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -99,8 +107,12 @@ class AmberflutterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, Plugi
         if (paramsMap == null) {
             return
         }
-        var packageName: String? = paramsMap["packageName"] as? String ?: return
-        val isInstalled: Boolean = isPackageInstalled(_context, packageName!!)
+        val packageName = paramsMap["packageName"] as? String
+        val isInstalled = if (packageName.isNullOrEmpty()) {
+          isExternalSignerInstalled(_context)
+        } else {
+          isPackageInstalled(_context, packageName)
+        } || isExternalSignerInstalled(_context)
         result.success(isInstalled);
     } else {
       result.notImplemented()
@@ -111,9 +123,18 @@ class AmberflutterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, Plugi
     if (requestCode == _intentRequestCode) {
       if (resultCode == Activity.RESULT_OK && intent != null) {
         val dataMap: HashMap<String, String?> = HashMap()
+        if (intent.hasExtra(intentExtraKeyResult)) {
+          val result = intent.getStringExtra(intentExtraKeyResult)
+          dataMap[intentExtraKeyResult] = result
+          dataMap[intentExtraKeySignature] = result
+        }
         if (intent.hasExtra(intentExtraKeySignature)) {
           val signature = intent.getStringExtra(intentExtraKeySignature)
           dataMap[intentExtraKeySignature] = signature
+        }
+        if (intent.hasExtra(intentExtraKeyPackage)) {
+          val packageName = intent.getStringExtra(intentExtraKeyPackage)
+          dataMap[intentExtraKeyPackage] = packageName
         }
         if (intent.hasExtra(intentExtraKeyId)) {
           val id = intent.getStringExtra(intentExtraKeyId)
@@ -177,6 +198,12 @@ class AmberflutterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, Plugi
         }
         if (it.moveToFirst()) {
           val dataMap: HashMap<String, String?> = HashMap()
+          val resultIndex = it.getColumnIndex("result")
+          if (resultIndex >= 0) {
+            val result = it.getString(resultIndex)
+            dataMap["result"] = result
+            dataMap["signature"] = result
+          }
           val index = it.getColumnIndex("signature")
           if (index < 0) {
             Log.d("getDataFromResolver", "column 'signature' not found")

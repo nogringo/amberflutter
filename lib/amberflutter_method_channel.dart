@@ -17,7 +17,7 @@ class MethodChannelAmberflutter extends AmberflutterPlatform {
     final data = await methodChannel.invokeMethod<bool>(
       'isAppInstalled',
       {
-      'packageName': 'com.greenart7c3.nostrsigner',
+        'packageName': 'com.greenart7c3.nostrsigner',
       },
     );
 
@@ -77,6 +77,7 @@ class MethodChannelAmberflutter extends AmberflutterPlatform {
       "uri_data": plaintext,
       "current_user": currentUser,
       "pubKey": pubKey,
+      "pubkey": pubKey,
       "id": id,
     };
 
@@ -100,6 +101,7 @@ class MethodChannelAmberflutter extends AmberflutterPlatform {
       "uri_data": ciphertext,
       "current_user": currentUser,
       "pubKey": pubKey,
+      "pubkey": pubKey,
       "id": id,
     };
 
@@ -123,6 +125,7 @@ class MethodChannelAmberflutter extends AmberflutterPlatform {
       "uri_data": plaintext,
       "current_user": currentUser,
       "pubKey": pubKey,
+      "pubkey": pubKey,
       "id": id,
     };
 
@@ -146,6 +149,7 @@ class MethodChannelAmberflutter extends AmberflutterPlatform {
       "uri_data": ciphertext,
       "current_user": currentUser,
       "pubKey": pubKey,
+      "pubkey": pubKey,
       "id": id,
     };
 
